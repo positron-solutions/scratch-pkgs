@@ -1,0 +1,82 @@
+#+title: Scratch Packages
+#+subtitle: for version {{{package-version}}}
+#+author: {{{package-author}}}
+#+email: {{{package-email}}}
+#+date: 2023-{{{year}}}
+#+property: header-args :eval no`
+#+options: broken-links:warn \n:nil ::t |:t ^:nil -:t f:t *:t <:t e:t ':t
+#+options: d:nil todo:nil pri:nil tags:not-in-toc stat:nil
+#+language: en
+#+export_file_name: scratch-pkgs.texi
+#+texinfo_dir_category: Emacs
+#+texinfo_dir_title: Scratch Packages: (scratch-pkgs)
+#+texinfo_dir_desc: Create, distribute, and maintain Emacs Lisp packages
+#+macro: package-version (eval (if (require 'erk nil t) (erk-package-version) "0.1.0"))
+#+macro: package-author (eval (if (require 'erk nil t) (erk-package-author) "Psionic K"))
+#+macro: package-email (eval (if (require 'erk nil t) (erk-package-email "contact@positron.solutions")))
+#+macro: year (eval (format-time-string "%Y"))
+#+texinfo_header: @comment !!!THIS FILE HAS BEEN GENERATED!!! Edit manual.org instead!
+
+* Scratch Packages
+Create quick packages for personal use in your configuration.  A more
+light-weight solution than [[https://github.com/positron-solutions/elisp-repo-kit][Elisp Repo Kit]] for quickly developing an idea within
+a properly formed package.
+** Why You Want This
+Compared to using ~ielm~ and ~lisp-interaction-mode~ in regular scratch buffers,
+packages support:
+- ~byte-compile-and-load~ to quickly reload (and let the compiler detect problems)
+- flycheck will work better
+- ~edebug~ and ~debug~
+- proper loading, unloading, reloading
+- dependency declaration so that ~use-package~ etc can arrange the loading order
+- autoloads
+I don't recommend ~lisp-interaction~ mode for scratch since packages have a lot of
+advantages, org mode is better for persistent literate exploration, and ielm
+(especially with history enabled) is better for truly ephemeral expression
+building.
+* Usage
+- Create a new package skeleton with ~scratch-pkgs-new~
+- See existing scratch packages with ~scratch-pkgs~
+** Using Your Package in Your Config
+Scratch packages works by:
+- Creates and stores packages inside =~/.emacs.d/var/scratch-pkgs/=
+- Adds that path to the loading path (see options below ⚠️)
+You can then declare with use-package normally:
+#+begin_src elisp
+  (use-package my-scratch-package)
+#+end_src
+** Load Path
+You want at least *one of these* solutions in place to make sure your scratch
+packages can be used in your configuration normally.
+1. Require scratch packages very early in your configuration, something like this:
+   #+begin_src elisp
+     (use-package scratch-pkgs)
+     (require 'scratch-pkgs) ; this blocks, ensuring your scratch pkg will be in the load path
+   #+end_src
+2. Add an implicit dependency in your ~use-package~ expressions:
+   #+begin_src elisp
+     (use-package my-scratch-package
+       :after scratch-pkgs)
+   #+end_src
+3. Configure the load path manually instead:
+   #+begin_src elisp
+     (push load-path "~/.emacs.d/var/scratch-pkgs/")
+   #+end_src
+4. For each package, use the explicit load path option of ~use-package~
+   (less convenient, so not recommended):
+   #+begin_src elisp
+     (use-package my-scratch-package
+       :load-path "~/.emacs.d/var/scratch-pkgs/")
+   #+end_src
+See the [[info:emacs#Lisp Libraries][Lisp Libraries]] section of the Emacs manual and [[info:elisp#Loading][Loading]] in the Elisp
+manual for more detailed treatment.
+* Licensing
+:PROPERTIES:
+:COPYING: t
+:END:
+
+#+include: "../COPYING"
+
+# Local Variables:
+# after-save-hook: (lambda () (when (require 'erk nil t) (erk-export-docs)))
+# End:
