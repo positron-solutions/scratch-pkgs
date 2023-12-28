@@ -113,6 +113,7 @@ SYMBOL and VALUE is from the setter in
     (let* ((files (scratch-pkgs--only-elisp-files scratch-pkgs-dir)))
       (completing-read "Choose existing scratch package: " files nil t))))
 
+;;;###autoload
 (defun scratch-pkgs (&optional file-name)
   "Open an old scratch FILE-NAME."
   (interactive (list (scratch-pkgs--read)))
@@ -122,12 +123,14 @@ SYMBOL and VALUE is from the setter in
         (switch-to-buffer buffer))
     (scratch-pkgs-new "scratch")))
 
+;;;###autoload
 (defun scratch-pkgs-new (name)
   "Create new scratch package for feature NAME."
   (interactive "sFeature symbol: ")
   (let* ((file-name (format "%s.el" name))
          (file-path (expand-file-name file-name scratch-pkgs-dir))
-         (buffer (find-file-noselect file-path)))
+         (buffer (or (get-buffer file-name)
+                     (find-file-noselect file-path))))
     (funcall scratch-pkgs-init buffer)
     (switch-to-buffer buffer)
     (emacs-lisp-mode)))
