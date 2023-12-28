@@ -764,28 +764,121 @@ Public License instead of this License.  But first, please read
 @end ifnottex
 
 @menu
-* Welcome::
-* Use with Elisp Repo Kit::
-* About this Manual::
+* Scratch Packages::
+* Usage::
+
+@detailmenu
+--- The Detailed Node Listing ---
+
+Scratch Packages
+
+* Why You Want This::
+
+Usage
+
+* Using Your Package in Your Config::
+* Load Path::
+
+@end detailmenu
 @end menu
 
-@node Welcome
-@chapter Welcome
+@node Scratch Packages
+@chapter Scratch Packages
 
-This is a simple org document used to generate an info manual and content for
-the README@.
+Create quick packages for personal use in your configuration.  A more
+light-weight solution than @uref{https://github.com/positron-solutions/elisp-repo-kit, Elisp Repo Kit} for quickly developing an idea within
+a properly formed package.
 
-@node Use with Elisp Repo Kit
-@chapter Use with Elisp Repo Kit
+@menu
+* Why You Want This::
+@end menu
 
-The repository hosting this package was created with @uref{https://github.com/positron-solutions/elisp-repo-kit, elisp-repo-kit}.  You can
-clone and rename it using @code{erk-new} to quickly get a package set up.
+@node Why You Want This
+@section Why You Want This
 
-@node About this Manual
-@chapter About this Manual
+Compared to using @code{ielm} and @code{lisp-interaction-mode} in regular scratch buffers,
+packages support:
+@itemize
+@item
+@code{byte-compile-and-load} to quickly reload (and let the compiler detect problems)
+@item
+flycheck will work better
+@item
+@code{edebug} and @code{debug}
+@item
+proper loading, unloading, reloading
+@item
+dependency declaration so that @code{use-package} etc can arrange the loading order
+@item
+autoloads
+@end itemize
+I don't recommend @code{lisp-interaction} mode for scratch since packages have a lot of
+advantages, org mode is better for persistent literate exploration, and ielm
+(especially with history enabled) is better for truly ephemeral expression
+building.
 
-To see more examples of writing an org document that exports to texinfo or
-markdown, see the longer examples in Elisp Repo Kit, which is available in its
-info manual as well.
+@node Usage
+@chapter Usage
+
+@itemize
+@item
+Create a new package skeleton with @code{scratch-pkgs-new}
+@item
+See existing scratch packages with @code{scratch-pkgs}
+@end itemize
+
+@menu
+* Using Your Package in Your Config::
+* Load Path::
+@end menu
+
+@node Using Your Package in Your Config
+@section Using Your Package in Your Config
+
+Scratch packages works by:
+@itemize
+@item
+Creates and stores packages inside @samp{~/.emacs.d/var/scratch-pkgs/}
+@item
+Adds that path to the loading path (see options below ⚠️)
+@end itemize
+You can then declare with use-package normally:
+@lisp
+(use-package my-scratch-package)
+@end lisp
+
+@node Load Path
+@section Load Path
+
+You want at least @strong{one of these} solutions in place to make sure your scratch
+packages can be used in your configuration normally.
+@enumerate
+@item
+Require scratch packages very early in your configuration, something like this:
+@lisp
+(use-package scratch-pkgs)
+(require 'scratch-pkgs) ; this blocks, ensuring your scratch pkg will be in the load path
+@end lisp
+@item
+Add an implicit dependency in your @code{use-package} expressions:
+@lisp
+(use-package my-scratch-package
+  :after scratch-pkgs)
+@end lisp
+@item
+Configure the load path manually instead:
+@lisp
+(push load-path "~/.emacs.d/var/scratch-pkgs/")
+@end lisp
+@item
+For each package, use the explicit load path option of @code{use-package}
+(less convenient, so not recommended):
+@lisp
+(use-package my-scratch-package
+  :load-path "~/.emacs.d/var/scratch-pkgs/")
+@end lisp
+@end enumerate
+See the @ref{Lisp Libraries,Lisp Libraries,,emacs,} section of the Emacs manual and @ref{Loading,Loading,,elisp,} in the Elisp
+manual for more detailed treatment.
 
 @bye
