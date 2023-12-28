@@ -54,8 +54,8 @@
 (declare-function no-littering-expand-var-file-name "no-littering")
 (defcustom scratch-pkgs-dir
   (file-name-directory (if (featurep 'no-littering)
-                           (no-littering-expand-var-file-name "scratch")
-                         (expand-file-name "var/scratch" user-emacs-directory)))
+                           (no-littering-expand-var-file-name "scratch-pkgs")
+                         (expand-file-name "var/scratch-pkgs" user-emacs-directory)))
   "Where scratches are saved."
   :group 'scratch-pkgs
   :type 'directory)

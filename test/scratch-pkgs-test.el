@@ -37,9 +37,14 @@
 (require 'ert)
 (require 'scratch-pkgs)
 
-;; (ert-deftest scratch-pkgs-hello-test ()
-;;   (should (string-match-p (scratch-pkgs-hello)
-;;                           "hello")))
+(ert-deftest scratch-pkgs-new-test ()
+  (should (save-window-excursion
+            (progn (scratch-pkgs-new "scratch-pkgs-test-package")
+                   (save-buffer "scratch-pkgs-test-package.el")
+                   (require 'scratch-pkgs-test-package)
+                   (delete-file "scratch-pkgs-test-package.el")
+                   (kill-buffer "scratch-pkgs-test-package.el")
+                   t))))
 
 (provide 'scratch-pkgs-test)
 ;;; scratch-pkgs-test.el ends here.
