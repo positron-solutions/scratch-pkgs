@@ -66,7 +66,7 @@ SYMBOL and VALUE is from the setter in
 `scratch-pkgs-add-to-load-path'."
   (set-default-toplevel-value symbol value)
   (unless (file-directory-p scratch-pkgs-dir)
-    (make-directory scratch-pkgs-dir))
+    (make-directory scratch-pkgs-dir t))
   (when scratch-pkgs-dir (push scratch-pkgs-dir load-path)))
 
 (defcustom scratch-pkgs-add-to-load-path t
