@@ -36,6 +36,8 @@
 
 ;;; Code:
 
+(eval-when-compile (require 'cl-lib))
+
 (defgroup scratch-pkgs nil "Scratch Packages." :prefix 'scratch-pkgs :group 'convenience)
 
 ;; TODO smarter package header maintenance, depend on ERK
@@ -174,6 +176,36 @@
   (mapcar
    (lambda (d) (add-to-list 'load-path d))
    (scratch-pkgs--package-dirs)))
+
+(declare-function elpaca-update-menus "elpaca")
+;;;###autoload
+(defun stratch-pkgs-elpaca-integration ()
+  "Set up Elpaca to be able to use scratch packages.
+This is intended for running this in your init.el if you use
+Elpaca.  It will ensure that Elpaca can handle your dependencies
+and building the package.  Keep in mind, you will need to run
+`elpaca-merge' when you make updates.  The scratch package is
+stored locally in `scratch-pkgs-dir' but Elpaca will be
+configured to treat this like a remote repository."
+
+  (unless (require 'elpaca nil t)
+    (user-error "You need to bootstrap Elpaca if you want to use it with your \
+scratch packages"))
+  (defun scratch-pkgs--menu (_)
+    "Return menu items for repos under `scratch-pkgs-dir'."
+    (cl-loop
+     for dir in (directory-files scratch-pkgs-dir nil "[^.]")
+     for path = (file-name-as-directory (expand-file-name dir scratch-pkgs-dir))
+     for pre-build =
+     `(let ((default-directory ,path))
+        (elpaca-with-process-call ("git" "config" "receive.denyCurrentBranch" "updateInstead")
+          (or success (error "%s" stderr))))
+     collect (cons (intern dir) (list :source "Scratch Packages"
+                                      :description (format "Locally hosted @ %s" path)
+                                      :recipe `(:package ,dir :repo ,path :pre-build ,pre-build)))))
+
+  (add-to-list 'elpaca-menu-functions #'scratch-pkgs--menu)
+  (elpaca-update-menus #'scratch-pkgs--menu))
 
 (provide 'scratch-pkgs)
 ;;; scratch-pkgs.el ends here.
