@@ -137,6 +137,22 @@
         (switch-to-buffer buffer))
     (scratch-pkgs-new "scratch")))
 
+(defun scratch-pkgs--init ()
+  "Initialize a git repo unless one exists already."
+  (let* ((dir (file-name-directory (buffer-file-name)))
+         (git-bin (executable-find "git"))
+         (output (get-buffer-create " *scratch-pkgs*"))
+         (default-directory dir))
+    (unless (file-exists-p dir)
+      (make-directory dir t))
+    (unless (file-exists-p (expand-file-name ".git" default-directory))
+      (unless (eq 0 (call-process git-bin nil output nil "init"))
+        (pop-to-buffer output)
+        (error "Could not init repository for new package"))
+      (unless (eq 0 (call-process git-bin nil output nil "add" (buffer-file-name)))
+        (pop-to-buffer output)
+        (error "Could not add new package: %s" (buffer-file-name))))))
+
 ;;;###autoload
 (defun scratch-pkgs-new (name)
   "Create new scratch package for feature NAME."
@@ -149,7 +165,9 @@
                      (find-file-noselect file-path))))
     (funcall scratch-pkgs-init buffer)
     (switch-to-buffer buffer)
-    (emacs-lisp-mode)))
+    (emacs-lisp-mode)
+    (add-hook 'before-save-hook #'scratch-pkgs--init nil t)))
+
 ;;;###autoload
 (defun scratch-pkgs-load-path-integration ()
   "Set up load path to find scratch packages."
