@@ -41,12 +41,17 @@
 ;; TODO smarter package header maintenance, depend on ERK
 (defcustom scratch-pkgs-template "\
 ;;; %1$s.el --- %2$s -*- lexical-binding: t; -*-
-;;
-;;; Commentary:
-;; good luck!
+
+;; Install Elisp Repo Kit for automating header generation.
+
 ;;; Code:
 
-(message \"Only the future is certain.\")
+(defgroup %1$ nil \"%2$s\" :prefix '%1$ :group 'convenience)
+
+(defun %1$-hello ()
+  \"Greet wisely.\"
+  (interactive)
+    (message \"Only the future is certain.\"))
 
 (provide '%1$s)
 ;;; %1$s.el ends here.\n"
