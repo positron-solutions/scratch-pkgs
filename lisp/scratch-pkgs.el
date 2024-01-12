@@ -68,21 +68,6 @@
   :group 'scratch-pkgs
   :type 'directory)
 
-(defun scratch-pkgs--configure-load-path (symbol value)
-  "Add scratch packages to the `load-path'.
-SYMBOL and VALUE is from the setter in
-`scratch-pkgs-add-to-load-path'."
-  (set-default-toplevel-value symbol value)
-  (unless (file-directory-p scratch-pkgs-dir)
-    (make-directory scratch-pkgs-dir t))
-  (when scratch-pkgs-dir (push scratch-pkgs-dir load-path)))
-
-(defcustom scratch-pkgs-add-to-load-path t
-  "When non-nil, adds your temporary packages to the load path."
-  :set #'scratch-pkgs--configure-load-path
-  :group 'scratch-pkgs
-  :type 'boolean)
-
 (defun scratch-pkgs-default-init (buffer)
   "Create a package skeleton in BUFFER."
   (switch-to-buffer buffer)
@@ -115,19 +100,40 @@ SYMBOL and VALUE is from the setter in
        (lambda (f) (not (string-match-p match-flycheck f)))
        (directory-files dir nil match-elisp)))))
 
+(defun scratch-pkgs--package-files ()
+  "Choices for scratch packages."
+  (append
+   (mapcar (lambda (d)
+             (car (mapcar
+                   (lambda (f) (cons f (expand-file-name f d)))
+                   (scratch-pkgs--only-elisp-files d))))
+    (scratch-pkgs--package-dirs))))
+
+(defun scratch-pkgs--package-dirs ()
+  "Return all scratch directories."
+  (let* ((default-directory scratch-pkgs-dir)
+         (dirs (mapcar
+                (lambda (f)
+                  (when (file-directory-p f)
+                    (file-name-as-directory
+                     (expand-file-name f default-directory))))
+                (directory-files scratch-pkgs-dir nil "[^.]"))))
+    (remove nil dirs)))
+
 (defun scratch-pkgs--read ()
   "Read a file in the scratch dir if there are files."
   (when (file-directory-p scratch-pkgs-dir)
-    (let* ((files (scratch-pkgs--only-elisp-files scratch-pkgs-dir)))
-      (completing-read "Choose existing scratch package: " files nil t))))
+    (let* ((files (scratch-pkgs--package-files)))
+      (cdr (assoc-string
+            (completing-read "Choose existing scratch package: " files nil t)
+            files)))))
 
 ;;;###autoload
-(defun scratch-pkgs (&optional file-name)
-  "Open an old scratch FILE-NAME."
+(defun scratch-pkgs (&optional file-path)
+  "Open an old scratch FILE-PATH."
   (interactive (list (scratch-pkgs--read)))
-  (if file-name
-      (let* ((file-path (expand-file-name file-name scratch-pkgs-dir))
-             (buffer (find-file-noselect file-path)))
+  (if file-path
+      (let* ((buffer (find-file-noselect file-path)))
         (switch-to-buffer buffer))
     (scratch-pkgs-new "scratch")))
 
@@ -136,12 +142,20 @@ SYMBOL and VALUE is from the setter in
   "Create new scratch package for feature NAME."
   (interactive "sFeature symbol: ")
   (let* ((file-name (format "%s.el" name))
-         (file-path (expand-file-name file-name scratch-pkgs-dir))
+         (dir-name  (expand-file-name
+                     (file-name-as-directory name) scratch-pkgs-dir))
+         (file-path (expand-file-name file-name dir-name))
          (buffer (or (get-buffer file-name)
                      (find-file-noselect file-path))))
     (funcall scratch-pkgs-init buffer)
     (switch-to-buffer buffer)
     (emacs-lisp-mode)))
+;;;###autoload
+(defun scratch-pkgs-load-path-integration ()
+  "Set up load path to find scratch packages."
+  (mapcar
+   (lambda (d) (add-to-list 'load-path d))
+   (scratch-pkgs--package-dirs)))
 
 (provide 'scratch-pkgs)
 ;;; scratch-pkgs.el ends here.
