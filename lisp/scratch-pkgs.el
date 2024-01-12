@@ -59,11 +59,11 @@
   :group 'scratch-pkgs
   :type 'string)
 
-(declare-function no-littering-expand-var-file-name "no-littering")
+(declare-function no-littering-expand-etc-file-name "no-littering")
 (defcustom scratch-pkgs-dir
   (file-name-as-directory (if (featurep 'no-littering)
-                              (no-littering-expand-var-file-name "scratch-pkgs")
-                            (expand-file-name "var/scratch-pkgs" user-emacs-directory)))
+                              (no-littering-expand-etc-file-name "scratch-pkgs")
+                            (expand-file-name "etc/scratch-pkgs" user-emacs-directory)))
   "Where scratches are saved."
   :group 'scratch-pkgs
   :type 'directory)
