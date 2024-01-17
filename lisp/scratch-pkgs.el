@@ -74,7 +74,9 @@
                     feature-title))))
 
 (defcustom scratch-pkgs-init #'scratch-pkgs-default-init
-  "Function to run on each new scratch buffer."
+  "Function to run with each new scratch package buffer.
+It is passed one argument, the BUFFER for a newly created
+package."
   :group 'scratch-pkgs
   :type 'function)
 
