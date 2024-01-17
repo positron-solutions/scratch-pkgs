@@ -61,15 +61,6 @@
   :group 'scratch-pkgs
   :type 'string)
 
-(declare-function no-littering-expand-etc-file-name "no-littering")
-(defcustom scratch-pkgs-dir
-  (file-name-as-directory (if (featurep 'no-littering)
-                              (no-littering-expand-etc-file-name "scratch-pkgs")
-                            (expand-file-name "etc/scratch-pkgs" user-emacs-directory)))
-  "Where scratches are saved."
-  :group 'scratch-pkgs
-  :type 'directory)
-
 (defun scratch-pkgs-default-init (buffer)
   "Create a package skeleton in BUFFER."
   (switch-to-buffer buffer)
@@ -87,53 +78,63 @@
   :group 'scratch-pkgs
   :type 'function)
 
-(defun scratch-pkgs--only-elisp-files (dir)
-  "Return just normal elisp files in DIR."
-  (let ((match-elisp (rx line-start
-                         (+ not-newline)
-                         (literal ".el")
-                         line-end))
-        (match-flycheck (rx line-start
-                            (literal "flycheck_")
-                            (+ not-newline)
-                            (literal ".el"))))
-    (save-match-data
-      (seq-filter
-       (lambda (f) (not (string-match-p match-flycheck f)))
-       (directory-files dir nil match-elisp)))))
+(defcustom scratch-pkgs-mode 'local
+  "One of `local' `elpaca' or `straight'."
+  :group 'scratch-pkgs
+  :options '(local straight elpaca)
+  :type 'symbol)
 
-(defun scratch-pkgs--package-files ()
-  "Choices for scratch packages."
-  (append
-   (mapcar (lambda (d)
-             (car (mapcar
-                   (lambda (f) (cons f (expand-file-name f d)))
-                   (scratch-pkgs--only-elisp-files d))))
-    (scratch-pkgs--package-dirs))))
+(declare-function no-littering-expand-etc-file-name "no-littering")
+(defun scratch-pkgs-local-repos-dir ()
+  "Directory where repositories will live.."
+  (if (featurep 'no-littering)
+      (no-littering-expand-etc-file-name "scratch-pkgs/")
+    (expand-file-name "etc/scratch-pkgs/" user-emacs-directory)))
 
-(defun scratch-pkgs--package-dirs ()
-  "Return all scratch directories."
-  (let* ((default-directory scratch-pkgs-dir)
-         (dirs (mapcar
-                (lambda (f)
-                  (when (file-directory-p f)
-                    (file-name-as-directory
-                     (expand-file-name f default-directory))))
-                (directory-files scratch-pkgs-dir nil "[^.]"))))
-    (remove nil dirs)))
+(defun scratch-pkgs-packages-install-dir ()
+  "Where packages are intended to be worked upon.
+When `scratch-pkgs-mode' is `local', this value is equal to
+`scratch-pkgs-local-repos-dir' because the packages are just added to the load
+path and used ."
+  (pcase scratch-pkgs-mode
+    ('local (scratch-pkgs-local-repos-dir))
+    ('straight (expand-file-name "straight/repos/" user-emacs-directory))
+    ('elpaca (expand-file-name "elpaca/repos/" user-emacs-directory))))
+
+(defun scratch-pkgs--repo-paths ()
+  "Return alist of repo names and paths.
+We can't list all packages in the packages dir when using `straight' and
+`elpaca' mode because there will be a lot of non-scratch packages.  We decide
+which ones are scratch by looking at the local repos."
+  (let* ((files (directory-files (scratch-pkgs-local-repos-dir) nil "^[^.]"))
+         (repo-paths (mapcar
+                      (lambda (f) (when-let*
+                                 ((path (expand-file-name
+                                         f (scratch-pkgs-local-repos-dir)))
+                                  (repo (and (file-directory-p path)
+                                             (file-exists-p
+                                              (expand-file-name ".git/" path)))))
+                               (cons f path)))
+                      files)))
+    (seq-filter #'identity repo-paths)))
 
 (defun scratch-pkgs--read ()
-  "Read a file in the scratch dir if there are files."
-  (when (file-directory-p scratch-pkgs-dir)
-    (let* ((files (scratch-pkgs--package-files)))
-      (cdr (assoc-string
-            (completing-read "Choose existing scratch package: " files nil t)
-            files)))))
+  "Return (REPO-NAME . PATH)."
+  (let* ((repo-paths (scratch-pkgs--repo-paths)))
+    (assoc-string
+     (completing-read "Choose existing scratch package: "
+                      repo-paths nil t)
+     repo-paths)))
+
+(defun scratch-pkgs--read-package ()
+  "Return PATH to package root."
+  (let ((repo-path (scratch-pkgs--read)))
+    (expand-file-name (concat (car repo-path) ".el") (cdr repo-path))))
 
 ;;;###autoload
 (defun scratch-pkgs (&optional file-path)
   "Open an old scratch FILE-PATH."
-  (interactive (list (scratch-pkgs--read)))
+  (interactive (list (scratch-pkgs--read-package)))
   (if file-path
       (let* ((buffer (find-file-noselect file-path)))
         (switch-to-buffer buffer))
@@ -158,10 +159,11 @@
 ;;;###autoload
 (defun scratch-pkgs-new (name)
   "Create new scratch package for feature NAME."
-  (interactive "sFeature symbol: ")
+  (interactive "sNew feature symbol: ")
   (let* ((file-name (format "%s.el" name))
          (dir-name  (expand-file-name
-                     (file-name-as-directory name) scratch-pkgs-dir))
+                     (file-name-as-directory name)
+                     (scratch-pkgs-local-repos-dir)))
          (file-path (expand-file-name file-name dir-name))
          (buffer (or (get-buffer file-name)
                      (find-file-noselect file-path))))
@@ -170,12 +172,17 @@
     (emacs-lisp-mode)
     (add-hook 'before-save-hook #'scratch-pkgs--init nil t)))
 
-;;;###autoload
-(defun scratch-pkgs-load-path-integration ()
+(defun scratch-pkgs--straight-integration ()
+  "TODO  Straight users can submit a PR."
+  (display-warning
+   '(scratch-pkgs straight)
+   "`scratch-pkgs-straight-integration' is just a stub."))
+
+(defun scratch-pkgs--load-path-integration ()
   "Set up load path to find scratch packages."
   (mapcar
    (lambda (d) (add-to-list 'load-path d))
-   (scratch-pkgs--package-dirs)))
+   (mapcar #'cdr (scratch-pkgs--repo-paths))))
 
 (declare-function elpaca-update-menus "elpaca")
 ;;;###autoload
