@@ -1,12 +1,12 @@
 ;;; scratch-pkgs.el --- Scratch Packages -*- lexical-binding: t; -*-
 
-;; SPDX-License-Identifier: GPL-3.0-or-later
-;; Copyright (C) 2023 Positron Solutions <contact@positron.solutions>
 ;; Author:  Psionic K <contact@positron.solutions>
-;; Keywords: convenience
-;; Version: 0.2.0
-;; Package-Requires: ((emacs "28.1"))
+;; Copyright (C) 2023 Positron Solutions <contact@positron.solutions>
 ;; Homepage: http://github.com/positron-solutions/scratch-pkgs
+;; Keywords: convenience
+;; Package-Requires: ((emacs "28.1"))
+;; SPDX-License-Identifier: GPL-3.0-or-later
+;; Version: 0.2.0
 
 ;; This file is not part of Emacs.
 
