@@ -192,8 +192,7 @@ which ones are scratch by looking at the local repos."
    (mapcar #'cdr (scratch-pkgs--repo-paths))))
 
 (declare-function elpaca-update-menus "elpaca")
-;;;###autoload
-(defun stratch-pkgs-elpaca-integration ()
+(defun stratch-pkgs--elpaca-integration ()
   "Set up Elpaca to be able to use scratch packages.
 This is intended for running this in your init.el if you use
 Elpaca.  It will ensure that Elpaca can handle your dependencies
@@ -220,6 +219,18 @@ scratch packages"))
 
   (add-to-list 'elpaca-menu-functions #'scratch-pkgs--menu)
   (elpaca-update-menus #'scratch-pkgs--menu))
+
+;;;###autoload
+(defun scratch-pkgs-integrate ()
+  "Configure recipes or load paths for using your packages.
+This makes `use-package' etc 'just work'."
+  (pcase scratch-pkgs-mode
+    (`local (scratch-pkgs--load-path-integration))
+    (`straight (scratch-pkgs--straight-integration))
+    (`elpaca (scratch-pkgs--elpaca-integration))
+    (_ (display-warning
+        '(scratch-pkgs)
+        "No matching integration for `scratch-pkgs-mode'"))))
 
 (provide 'scratch-pkgs)
 ;;; scratch-pkgs.el ends here.
