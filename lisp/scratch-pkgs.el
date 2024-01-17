@@ -128,6 +128,7 @@ When `scratch-pkgs-mode' is `local', this value is equal to
 path and used ."
   (pcase scratch-pkgs-mode
     ('local (scratch-pkgs-local-repos-dir))
+      ;; TODO these might be customized out from under us
     ('straight (expand-file-name "straight/repos/" user-emacs-directory))
     ('elpaca (expand-file-name "elpaca/repos/" user-emacs-directory))))
 
@@ -263,7 +264,7 @@ scratch packages"))
 ;;;###autoload
 (defun scratch-pkgs-integrate ()
   "Configure recipes or load paths for using your packages.
-This makes `use-package' etc 'just work'."
+This makes `use-package' etc just work."
   (pcase scratch-pkgs-mode
     (`local (scratch-pkgs--load-path-integration))
     (`straight (scratch-pkgs--straight-integration))
@@ -274,7 +275,6 @@ This makes `use-package' etc 'just work'."
 
 (provide 'scratch-pkgs)
 ;;; scratch-pkgs.el ends here.
-;; TODO make these local words generic across spelling pkgs
 ;; Local Variables:
 ;; ispell-buffer-session-localwords: ("pkgs")
 ;; jinx-local-words: "pkgs"
