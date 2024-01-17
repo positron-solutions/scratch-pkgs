@@ -149,6 +149,8 @@ which ones are scratch by looking at the local repos."
     (unless (file-exists-p dir)
       (make-directory dir t))
     (unless (file-exists-p (expand-file-name ".git" default-directory))
+      (when (eq 'scratch-pkgs-mode 'local)
+        (add-to-load-path dir))
       (unless (eq 0 (call-process git-bin nil output nil "init"))
         (pop-to-buffer output)
         (error "Could not init repository for new package"))
