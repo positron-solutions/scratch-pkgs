@@ -86,6 +86,13 @@ package."
   :options '(local straight elpaca)
   :type 'symbol)
 
+(defcustom scratch-pkgs-after-package-init-hook nil
+  "Hook run after a git repo is created in a newly saved package.
+You can use this integrate with arbitrary packages that keep
+track of projects or configure loading."
+  :group 'scratch-pkgs
+  :options '((magit-status) (projectile-dired) (project-dired) (elpaca-update-menus))
+  :type 'hook)
 (declare-function no-littering-expand-etc-file-name "no-littering")
 (defun scratch-pkgs-local-repos-dir ()
   "Directory where repositories will live.."
@@ -153,6 +160,7 @@ which ones are scratch by looking at the local repos."
     (unless (file-exists-p (expand-file-name ".git" default-directory))
       (when (eq 'scratch-pkgs-mode 'local)
         (add-to-load-path dir))
+      (run-hooks 'scratch-pkgs-after-package-init-hook)
       ;; Elpaca and the others will update via `elpaca-update-menus' and
       ;; implicit setup via `use-package' etc.
       (setq output (get-buffer-create " *scratch-pkgs*"))
