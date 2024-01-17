@@ -232,8 +232,22 @@ which ones are scratch by looking at the local repos."
    (lambda (d) (add-to-list 'load-path d))
    (mapcar #'cdr (scratch-pkgs--repo-paths))))
 
+(defun scratch-pkgs--menu (_)
+  "Return menu items for repos under `scratch-pkgs-dir'."
+  (cl-loop
+   for repo-path in (scratch-pkgs--repo-paths)
+   for dir = (file-name-as-directory (cdr repo-path))
+   for name = (car repo-path)
+   collect (cons (intern name) (list
+                                :source "Scratch Packages"
+                                :description (format "Locally hosted @ %s" dir)
+                                :recipe
+                                `(:package ,name :repo ,dir)))))
+
 (declare-function elpaca-update-menus "elpaca")
-(defun stratch-pkgs--elpaca-integration ()
+(defvar elpaca-menu-functions)
+
+(defun scratch-pkgs--elpaca-integration ()
   "Set up Elpaca to be able to use scratch packages.
 This is intended for running this in your init.el if you use
 Elpaca.  It will ensure that Elpaca can handle your dependencies
@@ -245,18 +259,6 @@ configured to treat this like a remote repository."
   (unless (require 'elpaca nil t)
     (user-error "You need to bootstrap Elpaca if you want to use it with your \
 scratch packages"))
-  (defun scratch-pkgs--menu (_)
-    "Return menu items for repos under `scratch-pkgs-dir'."
-    (cl-loop
-     for dir in (directory-files scratch-pkgs-dir nil "[^.]")
-     for path = (file-name-as-directory (expand-file-name dir scratch-pkgs-dir))
-     for pre-build =
-     `(let ((default-directory ,path))
-        (elpaca-with-process-call ("git" "config" "receive.denyCurrentBranch" "updateInstead")
-          (or success (error "%s" stderr))))
-     collect (cons (intern dir) (list :source "Scratch Packages"
-                                      :description (format "Locally hosted @ %s" path)
-                                      :recipe `(:package ,dir :repo ,path :pre-build ,pre-build)))))
 
   (add-to-list 'elpaca-menu-functions #'scratch-pkgs--menu)
   (elpaca-update-menus #'scratch-pkgs--menu))
