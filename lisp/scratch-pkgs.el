@@ -93,6 +93,11 @@ track of projects or configure loading."
   :group 'scratch-pkgs
   :options '((magit-status) (projectile-dired) (project-dired) (elpaca-update-menus))
   :type 'hook)
+
+(defcustom scratch-pkgs-recent-f t
+  "Add newly created scratch packages to `recentf-list'."
+  :group 'scratch-pkgs
+  :type 'boolean)
 (declare-function no-littering-expand-etc-file-name "no-littering")
 (defun scratch-pkgs-local-repos-dir ()
   "Directory where repositories will live.."
@@ -149,6 +154,7 @@ which ones are scratch by looking at the local repos."
         (switch-to-buffer buffer))
     (scratch-pkgs-new "scratch")))
 
+(declare-function recentf-add-file "recentf")
 (defun scratch-pkgs--init ()
   "Initialize a git repo unless one exists already."
   (let* ((dir (file-name-directory (buffer-file-name)))
@@ -160,6 +166,7 @@ which ones are scratch by looking at the local repos."
     (unless (file-exists-p (expand-file-name ".git" default-directory))
       (when (eq 'scratch-pkgs-mode 'local)
         (add-to-load-path dir))
+      (recentf-add-file (buffer-file-name))
       (run-hooks 'scratch-pkgs-after-package-init-hook)
       ;; Elpaca and the others will update via `elpaca-update-menus' and
       ;; implicit setup via `use-package' etc.
