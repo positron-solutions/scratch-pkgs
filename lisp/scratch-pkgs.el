@@ -146,13 +146,16 @@ which ones are scratch by looking at the local repos."
   "Initialize a git repo unless one exists already."
   (let* ((dir (file-name-directory (buffer-file-name)))
          (git-bin (executable-find "git"))
-         (output (get-buffer-create " *scratch-pkgs*"))
+         (output)
          (default-directory dir))
     (unless (file-exists-p dir)
       (make-directory dir t))
     (unless (file-exists-p (expand-file-name ".git" default-directory))
       (when (eq 'scratch-pkgs-mode 'local)
         (add-to-load-path dir))
+      ;; Elpaca and the others will update via `elpaca-update-menus' and
+      ;; implicit setup via `use-package' etc.
+      (setq output (get-buffer-create " *scratch-pkgs*"))
       (unless (eq 0 (call-process git-bin nil output nil "init"))
         (pop-to-buffer output)
         (error "Could not init repository for new package"))
