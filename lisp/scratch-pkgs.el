@@ -86,6 +86,15 @@ package."
   :options '(local straight elpaca)
   :type 'symbol)
 
+(defcustom scratch-pkgs-after-new-hook nil
+  "Runs directly after creating a new package.
+Saving the package is not necessary.  However, there are no files on disk yet
+when this is run.  However, you can save automatically if you set this to
+include `save-buffer'."
+  :group 'scratch-pkgs
+  :options '((save-buffer))
+  :type 'hook)
+
 (defcustom scratch-pkgs-after-package-init-hook nil
   "Hook run after a git repo is created in a newly saved package.
 You can use this integrate with arbitrary packages that keep
@@ -207,7 +216,8 @@ which ones are scratch by looking at the local repos."
     (funcall scratch-pkgs-init buffer)
     (switch-to-buffer buffer)
     (emacs-lisp-mode)
-    (add-hook 'before-save-hook #'scratch-pkgs--init nil t)))
+    (add-hook 'before-save-hook #'scratch-pkgs--init nil t)
+    (run-hooks 'scratch-pkgs-after-new-hook)))
 
 (defun scratch-pkgs--straight-integration ()
   "TODO  Straight users can submit a PR."
