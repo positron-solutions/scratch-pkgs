@@ -187,7 +187,6 @@ which ones are scratch by looking at the local repos."
       (when (eq 'scratch-pkgs-mode 'local)
         (add-to-load-path dir))
       (recentf-add-file (buffer-file-name))
-      (run-hooks 'scratch-pkgs-after-package-init-hook)
       (pcase scratch-pkgs-project-integration
         (`project (and (require 'project)
                        (project-remember-project (project-current))))
@@ -201,7 +200,8 @@ which ones are scratch by looking at the local repos."
         (error "Could not init repository for new package"))
       (unless (eq 0 (call-process git-bin nil output nil "add" (buffer-file-name)))
         (pop-to-buffer output)
-        (error "Could not add new package: %s" (buffer-file-name))))))
+        (error "Could not add new package: %s" (buffer-file-name))))
+    (run-hooks 'scratch-pkgs-after-package-init-hook)))
 
 ;;;###autoload
 (defun scratch-pkgs-new (name)
