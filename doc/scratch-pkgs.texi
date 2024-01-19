@@ -749,7 +749,7 @@ Public License instead of this License.  But first, please read
 @finalout
 @titlepage
 @title Scratch Packages
-@subtitle for version 0.1.0
+@subtitle for version 0.2.0
 @author Psionic K
 @page
 @vskip 0pt plus 1filll
@@ -776,8 +776,13 @@ Scratch Packages
 
 Usage
 
+* Customization::
 * Using Your Package in Your Config::
-* Load Path::
+
+Using Your Package in Your Config
+
+* Correct Loading & Initialization Order::
+* Package Management Integration::
 
 @end detailmenu
 @end menu
@@ -788,6 +793,9 @@ Usage
 Create quick packages for personal use in your configuration.  A more
 light-weight solution than @uref{https://github.com/positron-solutions/elisp-repo-kit, Elisp Repo Kit} for quickly developing an idea within
 a properly formed package.
+
+⚠️ @strong{This package will likely be rolled into Elisp Repo Kit} ⚠️
+⚠️ *The functionality is pre-release.  File bugs. ⚠️
 
 @menu
 * Why You Want This::
@@ -817,6 +825,8 @@ advantages, org mode is better for persistent literate exploration, and ielm
 (especially with history enabled) is better for truly ephemeral expression
 building.
 
+In addition, many packages for Editing Elisp such as Lispy contains shortcuts for evaluating expressions before the point or evaluating them in the context of the other window.  This last advantage really undermines the functionality provided in @code{lisp-interaction-mode}
+
 @node Usage
 @chapter Usage
 
@@ -828,9 +838,25 @@ See existing scratch packages with @code{scratch-pkgs}
 @end itemize
 
 @menu
+* Customization::
 * Using Your Package in Your Config::
-* Load Path::
 @end menu
+
+@node Customization
+@section Customization
+
+@itemize
+@item
+@code{scratch-pkgs-mode} controls the manner of integration with your Elisp package management strategy.  See the next section on using your package in your config.
+@item
+@code{scratch-pkgs-template} customize initial buffer contents ⚠️ unstable ⚠️
+@item
+@code{scratch-pkgs-init} function passed each new buffer.  Use to perform full customization of your new buffer behavior.
+@item
+@code{scratch-pkgs-after-new-hook} runs after creating a buffer.  @code{scratch-pkgs-init} can do the same things, but this hook requires less care.
+@item
+@code{scratch-pkgs-after-package-init-hook} runs only when you save your scratch buffer.  Because integrating the package with your Elisp package management may require setting up a git repository, much work is done only after the first save of a brand new package.  This hook runs after initialization.  You could run @code{magit-status} for instance to remind yourself of what was created after the first save.
+@end itemize
 
 @node Using Your Package in Your Config
 @section Using Your Package in Your Config
@@ -838,33 +864,41 @@ See existing scratch packages with @code{scratch-pkgs}
 Scratch packages works by:
 @itemize
 @item
-Creates and stores packages inside @samp{~/.emacs.d/var/scratch-pkgs/}
+Creates and stores packages inside @samp{~/.emacs.d/etc/scratch-pkgs/}
 @item
-Adds that path to the loading path (see options below ⚠️)
+Integrates with your usual package loading (see options below ⚠️)  You can then declare with use-package normally:
 @end itemize
-You can then declare with use-package normally:
 @lisp
 (use-package my-scratch-package)
 @end lisp
 
-@node Load Path
-@section Load Path
+@menu
+* Correct Loading & Initialization Order::
+* Package Management Integration::
+@end menu
 
-You want at least @strong{one of these} solutions in place to make sure your scratch
-packages can be used in your configuration normally.
+@node Correct Loading & Initialization Order
+@subsection Correct Loading & Initialization Order
+
+Scratch packages can integrate with Elisp package managers to streamline using your packages in your configuration.  It must to be loaded and perform initialization @emph{before} your personal packages are loaded.
+
+@enumerate
+@item
+@anchor{Load Path Initialization}Load Path Initialization
+
+
+@strong{Keep in mind, setting the load path will not handle your custom package dependencies}   One of the following solutions will make your packages available for simple @samp{(require 'my-package)} expressions.
+
 @enumerate
 @item
 Require scratch packages very early in your configuration, something like this:
 @lisp
 (use-package scratch-pkgs)
-(require 'scratch-pkgs) ; this blocks, ensuring your scratch pkg will be in the load path
+(require 'scratch-pkgs)
+(setopt scratch-pkgs-mode 'local)
+(scratch-pkgs-integrate)
 @end lisp
-@item
-Add an implicit dependency in your @code{use-package} expressions:
-@lisp
-(use-package my-scratch-package
-  :after scratch-pkgs)
-@end lisp
+
 @item
 Configure the load path manually instead:
 @lisp
@@ -880,5 +914,72 @@ For each package, use the explicit load path option of @code{use-package}
 @end enumerate
 See the @ref{Lisp Libraries,Lisp Libraries,,emacs,} section of the Emacs manual and @ref{Loading,Loading,,elisp,} in the Elisp
 manual for more detailed treatment.
+
+@item
+@anchor{Elpaca Initialization}Elpaca Initialization
+
+
+Usually just after loading other load-order sensitive packages like @samp{no-littering}, you can load @code{scratch-pkgs} and perform integration:
+@lisp
+(elpaca (scratch-pkgs
+         :host github :repo "positron-solutions/scratch-pkgs")
+  (require 'scratch-pkgs)
+  (setopt scratch-pkgs-mode 'elpaca)
+  (scratch-pkgs-integrate))
+@end lisp
+Afterwards, @samp{(use-package my-package)} will just work @strong{and} Elpaca will handle the dependencies.
+
+@item
+@anchor{Straight}Straight
+
+
+@strong{TODO}.  Other Elisp package management integrations to streamline usage are welcome.
+
+@item
+@anchor{Package}Package
+
+
+@strong{TODO}.  Likely we should use some @code{package-vc-install} style solution.
+@end enumerate
+
+@node Package Management Integration
+@subsection Package Management Integration
+
+@enumerate
+@item
+@anchor{Load Path}Load Path
+
+
+If you followed the initialization instructions above, your package is already on the load path.  However, manual load-path packages don't do any automated dependency handling.  You can declare this manually:
+@lisp
+(use-package my-package
+  :requires foo)
+
+(use-package my-package
+  :requires (foo bar baz))
+@end lisp
+
+@item
+@anchor{Elpaca}Elpaca
+
+
+Having Elpaca fetch dependencies and build your package is easy:
+@lisp
+(use-package my-package)
+@end lisp
+⚠️ Updates are @strong{not} automatic in this workflow.  You need to commit changes you want to install permanently and then run @code{elpaca-fetch} and @code{elpaca-merge} to install your modifications into the @samp{repos/} of your @code{elpaca-directory}
+
+@item
+@anchor{Straight (1)}Straight
+
+
+@strong{TODO}.  Other Elisp package management integrations to streamline usage are welcome.
+
+@item
+@anchor{Package (1)}Package
+
+
+@strong{TODO}.  Likely we should use some @code{package-vc-install} style solution.
+@end enumerate
 
 @bye
