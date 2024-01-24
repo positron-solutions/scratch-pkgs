@@ -239,6 +239,20 @@ which ones are scratch by looking at the local repos."
     (add-hook 'after-save-hook #'scratch-pkgs--init-repo nil t)
     (run-hooks 'scratch-pkgs-after-new-hook)))
 
+;;;###autoload
+(defun scratch-pkgs-delete (repo-path)
+  "Delete repo in REPO-PATH.
+REPO-PATH is a cons of REPO and PATH."
+  (interactive (list (scratch-pkgs--read)))
+  (let ((repo (car repo-path))
+        (path (cdr repo-path)))
+    ;; TODO automatically clean buffers
+    (unless (yes-or-no-p (format
+                          (propertize "Delete package: %s"
+                                      'face 'warning)
+                          repo))
+      (delete-directory path 'recursive))))
+
 (defun scratch-pkgs--straight-integration ()
   "TODO  Straight users can submit a PR."
   (display-warning
