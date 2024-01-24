@@ -48,9 +48,9 @@
 
 ;;; Code:
 
-(defgroup %1$ nil \"%2$s\" :prefix '%1$ :group 'convenience)
+(defgroup %1$s nil \"%2$s\" :prefix '%1$s :group 'convenience)
 
-(defun %1$-hello ()
+(defun %1$s-hello ()
   \"Greet wisely.\"
   (interactive)
     (message \"Only the future is certain.\"))
