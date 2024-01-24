@@ -175,7 +175,7 @@ which ones are scratch by looking at the local repos."
 (declare-function project-remember-project "project")
 (declare-function projectile-add-known-project "projectile")
 (declare-function recentf-add-file "recentf")
-(defun scratch-pkgs--init ()
+(defun scratch-pkgs--init-repo ()
   "Initialize a git repo unless one exists already."
   (let* ((dir (file-name-directory (buffer-file-name)))
          (git-bin (executable-find "git"))
@@ -223,7 +223,7 @@ which ones are scratch by looking at the local repos."
     (funcall scratch-pkgs-init buffer)
     (switch-to-buffer buffer)
     (emacs-lisp-mode)
-    (add-hook 'before-save-hook #'scratch-pkgs--init nil t)
+    (add-hook 'after-save-hook #'scratch-pkgs--init-repo nil t)
     (run-hooks 'scratch-pkgs-after-new-hook)))
 
 (defun scratch-pkgs--straight-integration ()
