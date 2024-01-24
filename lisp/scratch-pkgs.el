@@ -190,9 +190,6 @@ which ones are scratch by looking at the local repos."
     (unless (file-exists-p dir)
       (make-directory dir t))
     (unless (file-exists-p (expand-file-name ".git" default-directory))
-      (when (eq 'scratch-pkgs-mode 'local)
-        (add-to-load-path dir))
-      (recentf-add-file (buffer-file-name))
       (message "Initializing repo for: %s" default-directory)
       (when scratch-pkgs-recent-f
         (recentf-add-file (buffer-file-name)))
@@ -211,7 +208,13 @@ which ones are scratch by looking at the local repos."
         (pop-to-buffer output)
         (error "Could not add new package: %s" (buffer-file-name)))
       (pcase scratch-pkgs-mode
-        ((or 'elpaca 'straight)
+        (`local (add-to-load-path dir))
+        (`elpaca (scratch-pkgs--elpaca-integration) ; update menus
+          (unless (eq 0 (call-process git-bin nil output nil
+                                      "commit" "-m" "first commit"))
+            (pop-to-buffer output)
+            (error "Could not add new package: %s" (buffer-file-name))))
+        (`straight
          (unless (eq 0 (call-process git-bin nil output nil
                                      "commit" "-m" "first commit"))
            (pop-to-buffer output)
