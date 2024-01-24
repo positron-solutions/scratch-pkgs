@@ -171,6 +171,11 @@ which ones are scratch by looking at the local repos."
         (switch-to-buffer buffer))
     (scratch-pkgs-new "scratch")))
 
+(defun scratch-pkgs--make-dir ()
+  (let* ((dir (file-name-directory (buffer-file-name))))
+    (unless (file-exists-p dir)
+      (make-directory dir t))))
+
 (declare-function project-current "project")
 (declare-function project-remember-project "project")
 (declare-function projectile-add-known-project "projectile")
@@ -181,6 +186,7 @@ which ones are scratch by looking at the local repos."
          (git-bin (executable-find "git"))
          (output)
          (default-directory dir))
+    ;; `scratch-pkgs--make-dir' should ensure this already.
     (unless (file-exists-p dir)
       (make-directory dir t))
     (unless (file-exists-p (expand-file-name ".git" default-directory))
@@ -223,6 +229,7 @@ which ones are scratch by looking at the local repos."
     (funcall scratch-pkgs-init buffer)
     (switch-to-buffer buffer)
     (emacs-lisp-mode)
+    (add-hook 'before-save-hook #'scratch-pkgs--make-dir nil t)
     (add-hook 'after-save-hook #'scratch-pkgs--init-repo nil t)
     (run-hooks 'scratch-pkgs-after-new-hook)))
 
