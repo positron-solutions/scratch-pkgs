@@ -193,6 +193,7 @@ which ones are scratch by looking at the local repos."
       (when (eq 'scratch-pkgs-mode 'local)
         (add-to-load-path dir))
       (recentf-add-file (buffer-file-name))
+      (message "Initializing repo for: %s" default-directory)
       (pcase scratch-pkgs-project-integration
         (`project (and (require 'project)
                        (project-remember-project (project-current))))
