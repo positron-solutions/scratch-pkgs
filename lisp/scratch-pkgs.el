@@ -57,7 +57,7 @@
 
 (provide '%1$s)
 ;;; %1$s.el ends here.\n"
-  "Template for file backed scratch."
+  "Template for file-backed scratch."
   :group 'scratch-pkgs
   :type 'string)
 
@@ -158,7 +158,7 @@ which ones are scratch by looking at the local repos."
      repo-paths)))
 
 (defun scratch-pkgs--read-package ()
-  "Return PATH to package root."
+  "Return path to package root feature."
   (let ((repo-path (scratch-pkgs--read)))
     (expand-file-name (concat (car repo-path) ".el") (cdr repo-path))))
 
@@ -232,6 +232,8 @@ which ones are scratch by looking at the local repos."
          (file-path (expand-file-name file-name dir-name))
          (buffer (or (get-buffer file-name)
                      (find-file-noselect file-path))))
+    ;; TODO consider directory creation to get rid of message about the user
+    ;; needing to do it.
     (funcall scratch-pkgs-init buffer)
     (switch-to-buffer buffer)
     (emacs-lisp-mode)
